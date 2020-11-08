@@ -1,0 +1,1 @@
+Directory for frontend designed for the use with paludis

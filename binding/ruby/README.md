@@ -1,0 +1,1 @@
+Directory used to define Ruby bindings in paludis

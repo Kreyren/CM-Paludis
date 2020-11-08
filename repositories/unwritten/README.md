@@ -1,0 +1,1 @@
+Definition of 'unwritten' repository used to handle package definitions that were not written yet

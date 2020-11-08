@@ -1,0 +1,1 @@
+Directory used to define python bindings in paludis

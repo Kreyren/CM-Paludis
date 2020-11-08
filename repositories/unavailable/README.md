@@ -1,0 +1,1 @@
+Directory handling definitions for `unavailable` repository used to handle packages that are not available for X reason.

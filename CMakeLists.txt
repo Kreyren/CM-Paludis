@@ -1,444 +1,307 @@
-# vim: set et fdm=marker fmr={{{,}}} sw=2 sts=2 ts=8:
+# RESEARCH(Krey): Consider rewritting in meson
+# RESEARCH(Krey): Consider rewritting in cargo-make (requires adaptation)
 
-cmake_minimum_required(VERSION 3.5.0)
-cmake_policy(SET CMP0048 NEW)
-cmake_policy(SET CMP0051 NEW)
-cmake_policy(SET CMP0057 NEW)
-cmake_policy(SET CMP0058 NEW)
+# TRACKING-CARGOMAKE(Krey): Tracking for https://github.com/sagiegurari/cargo-make/issues/486
+## NOTE(Krey): Target here is to run client `cave` that is a frontend for the package manager with ultimate goal to compile any package on exheres-0 eapi -> Expected to then allow work on custom eapi
+## - [ ] We need method to create static and dynamic libraries depending on file type on demand
+## - [ ] Parsing options inside the source code prior to compilation
+## - [ ] Specifying executables
+## - [ ] Method to run tests
+## - [ ] Method to run benchmarks
 
-project(paludis VERSION 3.0.0)
+# NOTICE(Krey): Project-provided libraries are expected to be versioned as:
+## - {NAME}{PROJECT_NAME}_{MAJOR}.{MINOR}.{EXT}._<{MAJOR} * 100) + {MINOR}>
+### - {} -> Variable
+### - <> -> Arithmetics
+## - BRAINSTORM(Krey)
 
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
+# FIXME-DOCS(Krey): Cave depends on following libraries
+# - NOTE(Krey): There are also SE (Shell Executable [bash]) and NN (NiceNames [bash]) files that are being compiled with the source.. Seems as malpractice -> Not included in the list, needs investigation
+# - libpaludis_3.0.so.300
+## - libs/about_metadata.cc
+## - libs/action.cc
+## - libs/action_names.cc
+## - libs/additional_package_dep_spec_requirement.cc
+## - libs/always_enabled_dependency_label.cc
+## - libs/broken_linkage_configuration.cc
+## - libs/broken_linkage_finder.cc
+## - libs/buffer_output_manager.cc
+## - libs/call_pretty_printer.cc
+## - libs/changed_choices.cc
+## - libs/choice.cc
+## - libs/comma_separated_dep_parser.cc
+## - libs/comma_separated_dep_pretty_printer.cc
+## - libs/command_output_manager.cc
+## - libs/common_sets.cc
+## - libs/contents.cc
+## - libs/create_output_manager_info.cc
+## - libs/dep_label.cc
+## - libs/dep_spec.cc
+## - libs/dep_spec_annotations.cc
+## - libs/dep_spec_data.cc
+## - libs/dep_spec_flattener.cc
+## - libs/distribution.cc
+## - libs/elf_linkage_checker.cc
+## - libs/elike_blocker.cc
+## - libs/elike_choices.cc
+## - libs/elike_dep_parser.cc
+## - libs/elike_conditional_dep_spec.cc
+## - libs/elike_package_dep_spec.cc
+## - libs/elike_slot_requirement.cc
+## - libs/elike_use_requirement.cc
+## - libs/environment.cc
+## - libs/environment_factory.cc
+## - libs/environment_implementation.cc
+## - libs/file_output_manager.cc
+## - libs/filter.cc
+## - libs/filter_handler.cc
+## - libs/filtered_generator.cc
+## - libs/format_messages_output_manager.cc
+## - libs/formatted_pretty_printer.cc
+## - libs/forward_at_finish_output_manager.cc
+## - libs/fs_merger.cc
+## - libs/fuzzy_finder.cc
+## - libs/generator.cc
+## - libs/generator_handler.cc
+## - libs/hook.cc
+## - libs/hooker.cc
+## - libs/ipc_output_manager.cc
+## - libs/libtool_linkage_checker.cc
+## - libs/linkage_checker.cc
+## - libs/literal_metadata_key.cc
+## - libs/maintainer.cc
+## - libs/mask.cc
+## - libs/mask_utils.cc
+## - libs/match_package.cc
+## - libs/merger.cc
+## - libs/merger_entry_type.cc
+## - libs/metadata_key.cc
+## - libs/metadata_key_holder.cc
+## - libs/name.cc
+## - libs/ndbam.cc
+## - libs/ndbam_merger.cc
+## - libs/ndbam_unmerger.cc
+## - libs/notifier_callback.cc
+## - libs/output_manager.cc
+## - libs/output_manager_factory.cc
+## - libs/output_manager_from_environment.cc
+## - libs/package_dep_spec_collection.cc
+## - libs/package_dep_spec_properties.cc
+## - libs/package_id.cc
+## - libs/paludislike_options_conf.cc
+## - libs/partially_made_package_dep_spec.cc
+## - libs/partitioning.cc
+## - libs/permitted_choice_value_parameter_values.cc
+## - libs/pretty_print_options.cc
+## - libs/pretty_printer.cc
+## - libs/repository.cc
+## - libs/repository_factory.cc
+## - libs/repository_name_cache.cc
+## - libs/selection.cc
+## - libs/selection_handler.cc
+## - libs/serialise.cc
+## - libs/set_file.cc
+## - libs/slot.cc
+## - libs/slot_requirement.cc
+## - libs/spec_tree.cc
+## - libs/standard_output_manager.cc
+## - libs/stripper.cc
+## - libs/syncer.cc
+## - libs/tar_merger.cc
+## - libs/tee_output_manager.cc
+## - libs/unchoices_key.cc
+## - libs/unformatted_pretty_printer.cc
+## - libs/unmerger.cc
+## - libs/user_dep_spec.cc
+## - libs/version_operator.cc
+## - libs/version_requirements.cc
+## - version_spec.cc
+# - libpaludisargs_3.0.so.300
+## - args/args.cc
+## - args/args_error.cc
+## - args/args_group.cc
+## - args/args_handler.cc
+## - args/args_option.cc
+## - args/args_section.cc
+## - args/bad_argument.cc
+## - args/args_visitor.cc
+## - args/args_dumper.cc
+## - args/escape.cc
+## - args/log_level_arg.cc
+## - args/man.cc
+# - libpaludisutil_3.0.so.300
+## - utils/active_object_ptr.cc
+## - utils/buffer_output_stream.cc
+## - utils/channel.cc
+## - utils/config_file.cc
+## - utils/cookie.cc
+## - utils/damerau_levenshtein.cc
+## - utils/destringify.cc
+## - utils/deferred_construction_ptr.cc
+## - utils/digest_registry.cc
+## - utils/discard_output_stream.cc
+## - utils/elf.cc
+## - utils/elf_dynamic_section.cc
+## - utils/elf_relocation_section.cc
+## - utils/elf_sections.cc
+## - utils/elf_symbol_section.cc
+## - utils/enum_iterator.cc
+## - utils/env_var_names.cc
+## - utils/exception.cc
+## - utils/executor.cc
+## - utils/extract_host_from_url.cc
+## - utils/fs_iterator.cc
+## - utils/fs_error.cc
+## - utils/fs_path.cc
+## - utils/fs_stat.cc
+## - utils/graph.cc
+## - utils/hashes.cc
+## - utils/is_file_with_extension.cc
+## - utils/log.cc
+## - utils/make_named_values.cc
+## - utils/map.cc
+## - utils/md5.cc
+## - utils/named_value.cc
+## - utils/options.cc
+## - utils/persona.cc
+## - utils/pipe.cc
+## - utils/pool.cc
+## - utils/pretty_print.cc
+## - utils/process.cc
+## - utils/pty.cc
+## - utils/realpath.cc
+## - utils/return_literal_function.cc
+## - utils/rmd160.cc
+## - utils/safe_ifstream.cc
+## - utils/safe_ofstream.cc
+## - utils/sequence.cc
+## - utils/set.cc
+## - utils/sha1.cc
+## - utils/sha256.cc
+## - utils/sha512.cc
+## - utils/simple_parser.cc
+## - utils/string_list_stream.cc
+## - utils/strip.cc
+## - utils/system.cc
+## - utils/tail_output_stream.cc
+## - utils/tee_output_stream.cc
+## - utils/thread_pool.cc
+## - utils/timestamp.cc
+## - utils/tokeniser.cc
+## - utils/tribool.cc
+## - utils/type_list.cc
+## - utils/upper_lower.cc
+## - utils/visitor.cc
+## - utils/visitor_cast.cc
+## - utils/whirlpool.cc
+## - utils/wildcard_expander.cc
+# linux-vdso.so.1
+# libdl.so.2
+# libstdc++.so.6
+# libpthread.so.0
+# libc.so.6
+# ld-linux-x86-64.so.2
+# libm.so.6
+# libgcc_s.so.1
 
+# FIXME(Krey): Apply logic
+# NOTE(Krey): Comments '^#\s{1}.*' are stripped, '^###!\s{1}.*' are converted in markdown format with code below formatted in README.md
+
+# NOTE(Krey): Set version handling for cmake
+# FIXME-CI(Krey): Set CI to handled cmake compatibility
+cmake_minimum_required(VERSION 3.18.4 FATAL_ERROR)
+
+# Metadata
+project(PALUDIS
+	VERSION 3.0.0
+	DESCRIPTION Source-based package manager with options
+	HOMEPAGE_URL https://example.tld
+	LANGUAGES CXX)
+set(PROJECT_MAINTAINER kreyren@rixotstudio.cz)
+
+# Project configuration
+set(CMAKE_CXX_STANDARD 11)
+list(APPEND CMAKE_MODULE_PATH ## - cmake/modules)
+
+# Includes
+## CMake libraries
 include(CheckIncludeFile)
 include(CheckIncludeFileCXX)
 include(CheckCSourceCompiles)
 include(CheckCXXSourceCompiles)
+### Required for installation in GNU userland
 include(GNUInstallDirs)
 include(CMakeDependentOption)
-
-# TODO(compnerd) figure out if we want to just replace the HTMLDIR usage
-set(CMAKE_INSTALL_FULL_HTMLDIR "${CMAKE_INSTALL_FULL_DOCDIR}")
-
-set(CMAKE_CXX_STANDARD 11)
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
-set(PALUDIS_PKG_CONFIG_SLOT ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR})
-
-option(BUILD_SHARED_LIBS "build shared libraries" ON)
-option(ENABLE_DOXYGEN "enable doxygen based documentation" OFF)
-option(ENABLE_DOXYGEN_TAGS "use 'wget' to fetch external doxygen tags" OFF)
-option(ENABLE_GTEST "enable GTest based tests" ON)
-option(ENABLE_PBINS "enable pbins (nonfunctional, for development only)" OFF)
-option(ENABLE_PYTHON "enable python interface (default: OFF)" OFF)
-cmake_dependent_option(ENABLE_PYTHON_DOCS "build the python documentation" ON
-                       "ENABLE_PYTHON" OFF)
-option(ENABLE_RUBY "enable ruby interface (default: off)" OFF)
-cmake_dependent_option(ENABLE_RUBY_DOCS "build the ruby documentation" ON
-                       "ENABLE_RUBY" OFF)
-option(ENABLE_SEARCH_INDEX "enable search index (requires sqlite3)" OFF)
-option(ENABLE_STRIPPER "build the stripper (requires libmagic)" ON)
-option(ENABLE_VIM "whether to install vim scripts" OFF)
-option(ENABLE_XML "enable xml support for metadata.xml and GLSA support" OFF)
-option(PALUDIS_COLOUR_PINK "use the pink colourscheme" OFF)
-if(CMAKE_CROSSCOMPILING)
-  option(USE_PREBUILT_DOCUMENTATION "use prebuilt documentation" ON)
-else()
-  option(USE_PREBUILT_DOCUMENTATION "use prebuilt documentation" OFF)
-endif()
-
-set(PALUDIS_VIM_INSTALL_DIR "${CMAKE_INSTALL_FULL_DATADIR}/vim/vimfiles" CACHE PATH
-    "vim installation directory")
-
-set(PYTHON_SUPPORTED_VERSIONS 2.7 3.5 3.6 3.7 3.8)
-set(PYTHON_VERSION "2.7" CACHE STRING
-  "Python version (${PYTHON_SUPPORTED_VERSIONS}) (requires corresponding Boost.Python as well)")
-
-set(RUBY_SUPPORTED_VERSIONS 2.1 2.2 2.3 2.4 2.5 2.6)
-set(RUBY_VERSION "2.3" CACHE STRING "Ruby Version (${RUBY_SUPPORTED_VERSIONS})")
-
-set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
-set(THREADS_PREFER_PTHREAD_FLAG TRUE)
-find_package(Threads REQUIRED)
-
+# Project specific
+## FIXME-QA(Krey): Use PROJECT_NAME here to allow renames
 include(PaludisList)
 include(PaludisAddLibrary)
 include(PaludisAddTest)
 include(PaludisCheckFunctionExists)
 include(PaludisCompileFlags)
 
-# {{{ __cxa_demangle
-CHECK_INCLUDE_FILE_CXX(cxxabi.h HAVE_CXXABI_H)
-if(HAVE_CXXABI_H)
-  CHECK_CXX_SOURCE_COMPILES("
-    #include <typeinfo>
-    #include <cxxabi.h>
-    #include <stdlib.h>
-    int main(void) {
-      const char *name = typeid(name).name();
-      int status;
-      char *demangled = abi::__cxa_demangle(name, 0, 0, &status);
-      free(demangled);
-      return 0;
-    }
-  "
-  HAVE_CXA_DEMANGLE)
-endif()
-# }}}
+## File hierarchy
+set(${PROJECT_NAME}_REPOROOT ${CMAKE_CURRENT_SOURCE_DIR})
+set(${PROJECT_NAME}_CMAKEDIR ${PROJECT_NAME}_REPOROOT/cmake)
+### Components
+set(${PROJECT_NAME}_EDITORDIR ${PROJECT_NAME}_REPOROOT/paludis/editors)
+set(${PROJECT_NAME}_BINDINGDIR ${PROJECT_NAME}_REPOROOT/paludis/binding)
 
-# {{{ miscellaneous functions
-paludis_check_function_exists(strerror HAVE_STRERROR REQUIRED)
-paludis_check_function_exists(signal HAVE_SIGNAL REQUIRED)
-paludis_check_function_exists(grantpt HAVE_GRANTPT REQUIRED)
-paludis_check_function_exists(unlockpt HAVE_UNLOCKPT REQUIRED)
-paludis_check_function_exists(pipe2 HAVE_PIPE2 REQUIRED)
+## Configuration
+include(${${PROJECT_NAME}_REPOROOT}/cmake/config/distribution.cmake)
+# WTF(Krey): Why do we prefer PTHREAD?
+find_package(Threads REQUIRED)
+	set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+	set(THREADS_PREFER_PTHREAD_FLAG TRUE)
 
-paludis_check_function_exists(ptsname_r HAVE_PTSNAME_R)
-paludis_check_function_exists(ptsname HAVE_PTSNAME)
-if(NOT HAVE_PTSNAME_R AND NOT HAVE_PTSNAME)
-  message(SEND_ERROR "required function `ptsname_r` or `ptsname` not found")
-endif()
+# Options
+## Binding options
+include(## - cmake/config/binding.cmake)
+## Completion optiosn
+include(## - cmake/config/completion.cmake)
+## Component options
+include(## - cmake/config/component.cmake)
+## Color options
+include(## - cmake/config/color.cmake)
+## Component options
+include(## - cmake/config/component.cmake)
+## Editor support
+include(## - cmake/config/editor.cmake)
+## Client support e.g. cave
+include(## - cmake/config/client.cmake)
 
-paludis_check_function_exists(lchflags HAVE_LCHFLAGS)
-paludis_check_function_exists(utimensat HAVE_UTIMENSAT)
+## Build specific options
+# FIXME(Krey): Needs processing
+# FIXME-CI(Krey): Add build for static
+option(BUILD_SHARED_LIBS build shared (dynamically-linked) libraries ON)
+option(ENABLE_DOXYGEN enable doxygen based documentation OFF)
+option(ENABLE_DOXYGEN_TAGS use 'wget' to fetch external doxygen tags OFF)
+# FIXME-CI(Krey): Add build for GTest
+option(ENABLE_GTEST enable GTest based tests OFF)
+option(ENABLE_SEARCH_INDEX enable search index (requires sqlite3) OFF)
 
-paludis_check_function_exists(canonicalize_file_name HAVE_CANONICALIZE_FILE_NAME)
-# }}}
-
-# {{{ f*xattr family
-CHECK_INCLUDE_FILE(sys/xattr.h HAVE_SYS_XATTR_H)
-if(HAVE_SYS_XATTR_H)
-  CHECK_C_SOURCE_COMPILES("
-    #include <sys/xattr.h>
-    int main(void) {
-      flistxattr(0, 0, 0);
-      fgetxattr(0, 0, 0, 0);
-      fsetxattr(0, 0, 0, 0, 0);
-      return 0;
-    }
-  "
-  HAVE_XATTRS)
-endif()
-# }}}
-
-# {{{ dirent.d_type
-CHECK_C_SOURCE_COMPILES("
-  #include <sys/types.h>
-  #include <dirent.h>
-  int main(void) {
-    struct dirent dent;
-    dent.d_type = DT_LINK;
-    return 0;
-  }
-"
-HAVE_DIRENT_DTYPE)
-# }}}
-
-# {{{ fallocate
-CHECK_C_SOURCE_COMPILES("
-  #include <fcntl.h>
-  #include <unistd.h>
-  #include <sys/types.h>
-  #include <linux/falloc.h>
-  int main(void) {
-    return fallocate(0, FALLOC_FL_KEEP_SIZE, 0, 100);
-  }
-"
-HAVE_FALLOCATE)
-# }}}
-
-# TODO(compnerd) find_library(RT_LIBRARY NAMES rt)
-
-# {{{ -O3/extern template failure
-CHECK_CXX_SOURCE_COMPILES("
-template <typename>
-struct F;
-
-template <typename T_>
-struct T {
-  void f();
-};
-
-template <typename T_>
-void T<T_>::f() { F<T_>::g(); }
-
-extern template class T<int>;
-
-int main(void) {
-  T<int> f;
-  f.f();
-  return 0;
-}
-"
-CXX_INLINES_EXTERN_TEMPLATE)
-if(CXX_INLINES_EXTERN_TEMPLATE)
-  message(SEND_ERROR "${CMAKE_CXX} inlines extern template (GCC bug 39242?); try -O2 or -fno-inline-functions")
-endif()
-# }}}
-
-# {{{ explicitly instantiate fully specialized templates
-CHECK_CXX_SOURCE_COMPILES("
-  template <typename T_>
-  struct S;
-
-  template <>
-  struct S<int> { };
-
-  template class S<int>;
-"
-CXX_NEEDS_EXPLICIT_INSTANTIATION)
-if(NOT CXX_NEEDS_EXPLICIT_INSTANTIATION)
-  add_definitions(-DPALUDIS_NO_EXPLICIT_FULLY_SPECIALISED=1)
-endif()
-# }}}
-
-# {{{ paludis repositories
-set(PALUDIS_ALL_REPOSITORIES
-    accounts;e;fake;gemcutter;repository;unavailable;unpackaged;unwritten)
-set(PALUDIS_DEFAULT_REPOSITORIES
-    e;fake;repository;unavailable;unpackaged;unwritten)
-set(PALUDIS_REPOSITORIES ${PALUDIS_DEFAULT_REPOSITORIES} CACHE STRING
-    "paludis repositories (all;default;${PALUDIS_ALL_REPOSITORIES})")
-
-list_replace(PALUDIS_REPOSITORIES default "${PALUDIS_DEFAULT_REPOSITORIES}")
-list_replace(PALUDIS_REPOSITORIES all "${PALUDIS_ALL_REPOSITORIES}")
-
-set(REPOSITORY_GROUPS_DECLS)
-foreach(repository ${PALUDIS_ALL_REPOSITORIES})
-  string(TOUPPER ${repository} repository_uppercase)
-  set(ENABLE_${repository_uppercase}_REPOSITORY FALSE)
-
-  if(${repository} IN_LIST PALUDIS_REPOSITORIES)
-    set(REPOSITORY_GROUP_IF_${repository} ${repository})
-    set(ENABLE_${repository_uppercase}_REPOSITORY TRUE)
-  endif()
-  set(REPOSITORY_GROUPS_DECLS "${REPOSITORY_GROUPS_DECLS} struct ${repository};")
-endforeach()
-set(REPOSITORY_GROUPS_DECLS "${REPOSITORY_GROUPS_DECLS} struct semicolon_goes_where { }")
-# }}}
-
-# {{{ paludis environments
-set(PALUDIS_ALL_ENVIRONMENTS
-    paludis;portage;test)
-set(PALUDIS_DEFAULT_ENVIRONMENTS
-    paludis;test)
-set(PALUDIS_ENVIRONMENTS "${PALUDIS_DEFAULT_ENVIRONMENTS}" CACHE STRING
-    "paludis environments (all;default;${PALUDIS_ALL_ENVIRONMENTS})")
-
-list_replace(PALUDIS_ENVIRONMENTS default "${PALUDIS_DEFAULT_ENVIRONMENTS}")
-list_replace(PALUDIS_ENVIRONMENTS all "${PALUDIS_ALL_ENVIRONMENTS}")
-
-set(ENVIRONMENT_GROUPS_DECLS)
-foreach(environment ${PALUDIS_ALL_ENVIRONMENTS})
-  if(${environment} IN_LIST PALUDIS_ENVIRONMENTS)
-    set(ENVIRONMENT_GROUP_IF_${environment} environment_groups::${environment})
-
-    string(TOUPPER ${environment} uc_environment)
-    set(ENABLE_${uc_environment}_ENVIRONMENT 1)
-  endif()
-  set(ENVIRONMENT_GROUPS_DECLS "${ENVIRONMENT_GROUPS_DECLS} struct ${environment};")
-endforeach()
-set(ENVIRONMENT_GROUPS_DECLS "${ENVIRONMENT_GROUPS_DECLS} struct semicolon_goes_where { }")
-# }}}
-
-# {{{ paludis distribution
-set(PALUDIS_DEFAULT_DISTRIBUTION gentoo CACHE STRING
-    "paludis distribution (gentoo;exherbo)")
-# }}}
-
-# {{{ paludis clients
-set(PALUDIS_ALL_CLIENTS
-    cave)
-set(PALUDIS_DEFAULT_CLIENTS
-    cave)
-set(PALUDIS_CLIENTS ${PALUDIS_DEFAULT_CLIENTS} CACHE STRING
-    "paludis clients (all;default;${PALUDIS_ALL_CLIENTS})")
-
-list_replace(PALUDIS_CLIENTS default ${PALUDIS_DEFAULT_CLIENTS})
-list_replace(PALUDIS_CLIENTS all ${PALUDIS_ALL_CLIENTS})
-# }}}
-
-# {{{ configuration framework
-set(CONFIG_FRAMEWORK auto CACHE STRING
-    "paludis environments (auto;eselect;eclectic)")
-if(${CONFIG_FRAMEWORK} STREQUAL "auto")
-  execute_process(COMMAND
-                    which eclectic
-                  OUTPUT_VARIABLE
-                    eclectic_path
-                  ERROR_QUIET
-                  OUTPUT_STRIP_TRAILING_WHITESPACE)
-  if("${eclectic_path}" STREQUAL "")
-    set(CONFIG_FRAMEWORK eselect)
-  else()
-    set(CONFIG_FRAMEWORK eclectic)
-  endif()
-endif()
-execute_process(COMMAND
-                  ${CONFIG_FRAMEWORK} version
-                RESULT_VARIABLE
-                  exit_code
-                OUTPUT_QUIET
-                ERROR_QUIET)
-if(NOT ${exit_code} EQUAL 0)
-  message(SEND_ERROR "${CONFIG_FRAMEWORK} is required")
+# WTF(Krey)
+if(CMAKE_CROSSCOMPILING)
+  option(USE_PREBUILT_DOCUMENTATION use prebuilt documentation ON)
+else()
+  option(USE_PREBUILT_DOCUMENTATION use prebuilt documentation OFF)
 endif()
 
-foreach(module env;news)
-  execute_process(COMMAND
-                    ${CONFIG_FRAMEWORK} ${module}
-                  RESULT_VARIABLE
-                    exit_code
-                  OUTPUT_QUIET
-                  ERROR_QUIET)
-  if(NOT ${exit_code} EQUAL 0)
-    message(SEND_ERROR "${CONFIG_FRAMEWORK} is missing the `${module}` module")
-  endif()
-endforeach()
-# }}}
+# Add subdirs
+# add_subdirectory(args)
+# add_subdirectory(bindings)
+# add_subdirectory(completions)
+add_subdirectory(clients)
+# add_subdirectory(distributions)
+# add_subdirectory(editors)
+# add_subdirectory(environments)
+# add_subdirectory(fetchers)
+# add_subdirectory(hooks)
+# add_subdirectory(misc)
+# add_subdirectory(repositories)
+# add_subdirectory(resolvers)
+# add_subdirectory(selinux)
+# add_subdirectory(syncers)
+# add_subdirectory(utils)
 
-if(ENABLE_DOXYGEN)
-  find_package(Doxygen REQUIRED)
-endif()
-
-if(ENABLE_GEMCUTTER_REPOSITORY)
-  find_package(Jansson REQUIRED)
-endif()
-
-if(ENABLE_PBINS)
-  find_package(LibArchive 3.0.4 REQUIRED)
-endif()
-
-if(ENABLE_PYTHON)
-  list(FIND PYTHON_SUPPORTED_VERSIONS "${PYTHON_VERSION}" _python_version_index)
-  if(_python_version_index EQUAL -1)
-    message(SEND_ERROR "Invalid Python version specified (${PYTHON_VERSION})")
-  endif()
-
-  find_package(PythonInterp ${PYTHON_VERSION})
-  if(NOT PYTHONINTERP_FOUND)
-    message(SEND_ERROR "python is required for python support")
-  endif()
-  execute_process(COMMAND
-                    "${PYTHON_EXECUTABLE}" -c "from distutils import sysconfig; print(sysconfig.get_python_lib(1))"
-                  OUTPUT_VARIABLE
-                    PALUDIS_PYEXECDIR
-                  ERROR_QUIET
-                  OUTPUT_STRIP_TRAILING_WHITESPACE)
-  get_filename_component(PALUDIS_PYEXECDIR ${PALUDIS_PYEXECDIR} REALPATH)
-
-  find_package(PythonLibs ${PYTHON_VERSION})
-
-  find_package(Boost 1.67.0 REQUIRED
-               COMPONENTS
-                 python${PYTHON_VERSION_MAJOR}${PYTHON_VERSION_MINOR})
-
-  set(PALUDIS_PYTHON_INSTALL_DIR "${PALUDIS_PYEXECDIR}" CACHE PATH
-      "python installation dir")
-endif()
-
-if(ENABLE_PYTHON_DOCS)
-  if(NOT ENABLE_PYTHON)
-    message(SEND_ERROR "python docs requires python to build")
-  endif()
-
-  find_package(Sphinx REQUIRED)
-endif()
-
-if(ENABLE_RUBY)
-  list(FIND RUBY_SUPPORTED_VERSIONS "${RUBY_VERSION}" _ruby_version_index)
-
-  if(_ruby_version_index EQUAL -1)
-    message(SEND_ERROR "invalid ruby version specified (${RUBY_VERSION})")
-  endif()
-
-  find_package(Ruby ${RUBY_VERSION} REQUIRED)
-endif()
-
-set(PALUDIS_RUBY_INSTALL_DIR "${RUBY_SITEARCH_DIR}" CACHE PATH
-    "ruby installation directory")
-
-if(ENABLE_RUBY_DOCS)
-  if(NOT ENABLE_RUBY)
-    message(SEND_ERROR "ruby docs requires ruby to build")
-  endif()
-
-  execute_process(COMMAND
-                    "${RUBY_EXECUTABLE}" -rubygems -e "require 'syntax/convertors/html'"
-                  OUTPUT_VARIABLE
-                    ruby_gem_syntax_available
-                  OUTPUT_QUIET
-                  ERROR_QUIET)
-  if(NOT ${ruby_gem_syntax_available} EQUAL 0)
-    message(SEND_ERROR "syntax (http://syntax.rubyforge.org) is needed to build ruby documentation")
-  endif()
-endif()
-
-if(ENABLE_SEARCH_INDEX)
-  find_package(SQLite3 REQUIRED)
-endif()
-
-if(ENABLE_STRIPPER)
-  find_package(LibMagic REQUIRED)
-endif()
-
-if(ENABLE_XML)
-  find_package(LibXml2 2.6 REQUIRED)
-endif()
-
-if(NOT USE_PREBUILT_DOCUMENTATION)
-  find_program(ASCIIDOC_EXECUTABLE asciidoc)
-  if(NOT ASCIIDOC_EXECUTABLE)
-    message(SEND_ERROR "asciidoc is required for documentation")
-  endif()
-
-  find_program(XMLTO_EXECUTABLE xmlto)
-  if(NOT XMLTO_EXECUTABLE)
-    message(SEND_ERROR "xmlto is required for documentation")
-  endif()
-
-  find_program(TIDY_EXECUTABLE tidy)
-  if(NOT TIDY_EXECUTABLE)
-    message(SEND_ERROR "tidy is required for documentation")
-  endif()
-endif()
-
-if(cave IN_LIST PALUDIS_CLIENTS)
-  find_package(PCRECPP 7.8 REQUIRED)
-endif()
-
-enable_testing()
-if(ENABLE_GTEST)
-  find_package(GTest REQUIRED)
-endif()
-
-find_program(BASH_EXECUTABLE bash)
-find_program(CAT_EXECUTABLE cat)
-find_program(GIT_EXECUTABLE git)
-find_program(SED_EXECUTABLE sed gsed)
-
-configure_file("${PROJECT_SOURCE_DIR}/cmake/config.h.in"
-               "${CMAKE_BINARY_DIR}/config.h")
-
-add_definitions(-DSYSCONFDIR="${CMAKE_INSTALL_FULL_SYSCONFDIR}"
-                -DLIBEXECDIR="${CMAKE_INSTALL_FULL_LIBEXECDIR}"
-                -DDATADIR="${CMAKE_INSTALL_FULL_DATADIR}"
-                -DLIBDIR="${CMAKE_INSTALL_FULL_LIBDIR}")
-
-include_directories("${CMAKE_BINARY_DIR}")
-include_directories("${PROJECT_SOURCE_DIR}")
-
-add_subdirectory(misc)
-add_subdirectory(paludis)
-add_subdirectory(python)
-add_subdirectory(ruby)
-add_subdirectory(src)
-add_subdirectory(doc)
-add_subdirectory(hooks)
-add_subdirectory(vim)
-add_subdirectory(bash-completion)
-add_subdirectory(zsh-completion)
-add_subdirectory(pkg-config)
-
-include(PaludisPackage)
-
+# Additional code

@@ -2,6 +2,11 @@
 include(CMakeParseArguments)
 include(PaludisGeneratorUtils)
 
+# WTF(Krey)
+# - Create library based on set preference in either static, shared, object?
+# - 
+# WTF(Krey): NN? -> NiceName (Bash script)
+# WTF(Krey): SE? -> Shell Executable (Bash script.. Why call it Shell Executable...)
 function(paludis_add_library library_name)
   set(options SHARED_LIBRARY STATIC_LIBRARY OBJECT_LIBRARY UNVERSIONED)
   set(single_value_args SE_HEADERS)
@@ -9,10 +14,12 @@ function(paludis_add_library library_name)
 
   cmake_parse_arguments(PAL "${options}" "${single_value_args}" "${multiple_value_args}" ${ARGN})
 
+	# Exit if object has been used with static library
   if(PAL_STATIC_LIBRARY AND PAL_OBJECT_LIBRARY)
     message(SEND_ERROR "paludis_add_library(${library_name}) called with STATIC_LIBRARY and OBJECT_LIBRARY")
   endif()
 
+	# Deduce libkind
   if(PAL_STATIC_LIBRARY)
     set(libkind STATIC)
   elseif(PAL_OBJECT_LIBRARY)
@@ -23,6 +30,7 @@ function(paludis_add_library library_name)
     set(libkind)
   endif()
 
+	# NiceNames (bash script)
   set(nnsources)
   set(nndependencies)
   foreach(nn_source ${PAL_NN_SOURCES})
@@ -36,7 +44,8 @@ function(paludis_add_library library_name)
                         ${nnname}_SOURCE_FILE)
     list(APPEND nnsources ${${nnname}_SOURCE_FILE})
     list(APPEND nndependencies ${${nnname}_HEADER_TARGET};${${nnname}_SOURCE_TARGET})
-  endforeach()
+	endforeach()
+	
   add_custom_target(${library_name}_NN
                     DEPENDS
                       ${nndependencies})
@@ -85,6 +94,7 @@ function(paludis_add_library library_name)
     set_target_properties(${library_name} PROPERTIES OUTPUT_NAME ${output_name})
   endif()
 
+	# Generate library with suffix of version for which it was made e.g. paludis 3.0.0 would have library named `libpaludis.so.300`
   if("${libkind}" STREQUAL "SHARED_LIBRARY" AND NOT PAL_UNVERSIONED)
     math(EXPR version_major "${PROJECT_VERSION_MAJOR} * 100 + ${PROJECT_VERSION_MINOR}")
     set_target_properties(${library_name}

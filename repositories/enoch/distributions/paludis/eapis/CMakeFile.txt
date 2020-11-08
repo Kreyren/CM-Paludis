@@ -1,0 +1,8 @@
+if(paludis IN_LIST PALUDIS_DISTRIBUTION)
+	install(
+		FILES
+			"${CMAKE_CURRENT_SOURCE_DIR}/paludis-1.conf"
+			"${CMAKE_CURRENT_SOURCE_DIR}/pbin-1+paludis-1.conf"
+	DESTINATION
+		"${CMAKE_INSTALL_FULL_DATADIR}/paludis/eapis")
+endif()

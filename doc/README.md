@@ -1,0 +1,1 @@
+Directory dedicated to documentation of the project

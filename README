@@ -1,3 +1,24 @@
+
+### Recommended resourced
+#### CMake
+1. Free YouTube series "How to CMake Good" by ![vector-of-bool](https://www.youtube.com/channel/UCkYGy96LXk3g-d6kP22aSDA) available on hyperlink <https://www.youtube.com/playlist?list=PLK6MXr8gasrGmIiSuVQXpfFuE1uPT615s>
+
+FIXME-DOCS(Krey): Cave has runtime dependency on GCC and glibc/musl
+- linux-vdso.so.1 (Linux Kernel)
+- libpaludis_3.0.so.300 (paludis)
+- libpaludisargs_3.0.so.300 (paludis)
+- libdl.so.2 (glibc) 
+- libpaludisutil_3.0.so.300 (paludis)
+- libstdc++.so.6 (GCC)
+- libgcc_s.so.1 (GCC)
+- libpthread.so.0 (glibc) 
+- libc.so.6 (glibc) 
+- ld-linux-x86-64.so.2 (glibc) 
+- libm.so.6 (glibc) 
+
+---
+
+
 README for Paludis
 ==================
 

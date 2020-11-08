@@ -1,0 +1,4 @@
+if(paludis IN_LIST PALUDIS_DISTRIBUTION)
+	add_subdirectory(paludis-1)
+	add_subdirectory(pbin-1)
+endif()

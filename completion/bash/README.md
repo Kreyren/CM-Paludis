@@ -1,0 +1,1 @@
+Directory dedicated to handling of bash-completion

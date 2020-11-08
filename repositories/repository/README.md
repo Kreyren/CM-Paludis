@@ -1,0 +1,1 @@
+Directory used to provide compatibility to handle repositories on paludis
